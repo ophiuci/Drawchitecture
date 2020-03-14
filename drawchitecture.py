@@ -518,13 +518,12 @@ class SetupDrawchitecture(bpy.types.Operator):  # standard plane
     bl_label = 'SetupDrawchitecture View'
 
     def execute(self, context):
-        # Viewport shader mode set to 'WIREFRAME' for transparent objects
-        find_3dview_space().shading.type = 'WIREFRAME'
+        find_3dview_space().shading.type = 'MATERIAL' # Prefer material view
         find_3dview_space().shading.show_xray_wireframe = True
 
         # Disable Floor Grid + Cursor in active View3D, make Vertices in editmode visible
         find_3dview_space().overlay.show_floor = False
-        find_3dview_space().overlay.show_cursor = False
+        find_3dview_space().overlay.show_cursor = True
         find_3dview_space().overlay.show_object_origins = False
         find_3dview_space().overlay.vertex_opacity = 1
 
@@ -970,6 +969,9 @@ class AddPanel(View3DPanel, Panel):
                                       emboss=False)
         if bpy.context.scene.expand_grid:
             if [obj for obj in bpy.data.objects if obj.name == 'workplane_TEMPORARY']:
+                workplane_grid_box_row0 = workplane_grid_box.row()
+                workplane_grid_box_row0.prop(bpy.data.objects['workplane_TEMPORARY'], "show_wire", text="Show wire")
+
                 workplane_grid_box_row1 = workplane_grid_box.row(align=True)
 
                 workplane_grid_box_row1_col1 = workplane_grid_box_row1.column(align=True)
