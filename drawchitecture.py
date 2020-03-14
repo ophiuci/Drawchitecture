@@ -2,8 +2,8 @@ bl_info = {
     "name": "Drawchitecture",
     "description": "creates temporary workplanes by strokes or points for drawing in 3D with the grease pencil",
     "author": "Philipp Sommer",
-    "version": (1, 1),
-    "blender": (2, 80, 0),
+    "version": (1, 2),
+    "blender": (2, 82, 0),
     "location": "View3D",
     # "warning": "", # used for warning icon and text in addons panel
     # "wiki_url": ""
@@ -126,7 +126,8 @@ def add_GP():
     b = []
     name = gpencil_obj_name()
     # list of grease_pencil object names before adding new one
-    for o in bpy.data.grease_pencil:
+
+    for o in bpy.data.grease_pencils:
         a.append(o.name)
 
     # adding new GP Object
@@ -138,14 +139,14 @@ def add_GP():
     bpy.context.view_layer.objects.active.lock_location = [True for x in range(3)]
 
     # find out the name of newly created grease_pencil object to rename it properly
-    for o in bpy.data.grease_pencil:
+    for o in bpy.data.grease_pencils:
         b.append(o.name)
     newgpname = list(set(b) - set(a))
     # name + Number same as GP Object
-    bpy.data.grease_pencil[newgpname[0]].name = name
+    bpy.data.grease_pencils[newgpname[0]].name = name
     save_active_gp()
-    # name + Number by counting all other grease_pencil objects
-    # bpy.data.grease_pencil[newgpname[0]].name = gpname()
+    # name + Number by counting all other grease_pencils objects
+    # bpy.data.grease_pencils[newgpname[0]].name = gpname()
 
 
 def add_workplane_3p():
@@ -159,8 +160,8 @@ def add_workplane_3p():
     else:
         name_active = bpy.context.scene.gp_active
 
-    if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencil)):
-        gp_pen = bpy.data.grease_pencil[name_active]
+    if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencils)):
+        gp_pen = bpy.data.grease_pencils[name_active]
         if gp_pen.layers.active:
             if gp_pen.layers.active.active_frame.strokes:
                 for stroke in gp_pen.layers.active.active_frame.strokes:
@@ -388,8 +389,8 @@ def laststroke():
         # name of the active object (Type Gpencil Object)
         name_active = bpy.context.view_layer.objects.active.name
 
-        if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencil)):
-            gp_pen = bpy.data.grease_pencil[name_active]
+        if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencils)):
+            gp_pen = bpy.data.grease_pencils[name_active]
             if gp_pen.layers.active:
                 if gp_pen.layers.active.active_frame.strokes:
                     ls = gp_pen.layers.active.active_frame.strokes[-1]
@@ -401,7 +402,7 @@ def laststroke():
                 print('laststroke: active GP Obj has no strokes')
                 return {'No Strokes'}
         else:
-            print('laststroke: Names of active GP object and its bpy.data.grease_pencil equivalent must be equal')
+            print('laststroke: Names of active GP object and its bpy.data.grease_pencils equivalent must be equal')
             return {'Names not equal'}
     else:
         print('No GP object active')
@@ -460,12 +461,15 @@ def plane_array(p1, p2, rotation):
     baseplane = bpy.context.active_object
     baseplane.name = 'workplane_TEMPORARY'
     add4arrays()
-    baseplane.scale = bpy.context.scene.grid_scale
+
+    scale_default = (1.0, 1.0, 1.0)
+    baseplane.scale = scale_default
 
     # set material of plane
-    # mat = bpy.data.materials['Mat_Transparent_White']
-    # baseplane.active_material = mat
+    mat = bpy.data.materials['Mat_Transparent_White']
+    baseplane.active_material = mat
     baseplane.show_wire = True
+
     deselect_all()
     activate_gp()
     if rotation not in ('3p', 'bp'):
@@ -481,7 +485,7 @@ def save_active_gp():
         if (bpy.context.view_layer.objects.active.type == 'GPENCIL'):
             # name of the active object (Type Gpencil Object)
             name_active = bpy.context.view_layer.objects.active.name
-            if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencil)):
+            if (name_active in (gp_pen.name for gp_pen in bpy.data.grease_pencils)):
                 # select data.grease_pencil object to select its strokes
                 bpy.context.scene.gp_active = name_active
             else:
@@ -621,9 +625,9 @@ class ClearPlaneAndGP(bpy.types.Operator):
                     o.select_set(state=True)
             bpy.ops.object.delete()
 
-            if bpy.data.grease_pencil:
-                for gp in bpy.data.grease_pencil:
-                    bpy.data.grease_pencil.remove(gp)
+            if bpy.data.grease_pencils:
+                for gp in bpy.data.grease_pencils:
+                    bpy.data.grease_pencils.remove(gp)
             bpy.context.scene.gp_active = 'empty'
             bpy.context.scene.plane_offset = 0.0
             bpy.ops.dt.initialize()
@@ -646,11 +650,11 @@ class DeleteLastStroke(bpy.types.Operator):
         gpencil_paint_mode()
 
         active_name = bpy.context.scene.gp_active
-        if bpy.data.grease_pencil[active_name].layers.active:
-            if bpy.data.grease_pencil[active_name].layers.active.active_frame.strokes:
+        if bpy.data.grease_pencils[active_name].layers.active:
+            if bpy.data.grease_pencils[active_name].layers.active.active_frame.strokes:
                 # deselect gp to only delete latest stroke
                 deselect_all_gp()
-                bpy.data.grease_pencil[active_name].layers.active.active_frame.strokes[-1].select = True
+                bpy.data.grease_pencils[active_name].layers.active.active_frame.strokes[-1].select = True
                 bpy.ops.gpencil.delete(type='STROKES')
             else:
                 print('DeleteLastStroke: Active Grease Pencil has no strokes to be deleted')
@@ -697,7 +701,7 @@ class ResetScale(bpy.types.Operator):
     bl_label = 'reset scale + count'
 
     def execute(self, context):
-        scale_default = (1.0, 1.0, 0)
+        scale_default = (1.0, 1.0, 1.0)
 
         wp = bpy.data.objects['workplane_TEMPORARY']
 
@@ -725,7 +729,10 @@ class SelectGPobject(bpy.types.Operator):
         deselect_all()
         gp = context.scene.objects.get(self.gp)
         bpy.context.view_layer.objects.active = gp
-        context.scene.grease_pencil = gp.grease_pencil
+
+        # The following line was erroring out in 2.82
+        # context.scene.grease_pencil = gp.grease_pencil
+
         save_active_gp()
         gpencil_paint_mode()
         return {'FINISHED'}
@@ -763,7 +770,7 @@ class WPstrokeV(bpy.types.Operator):  # First+ Last Point of last Stroke create 
 
     def execute(self, context):
         # last greasepencil stroke
-        # gp_laststroke = bpy.data.grease_pencil[-1].layers.active.active_frame.strokes[-1]
+        # gp_laststroke = bpy.data.grease_pencils[-1].layers.active.active_frame.strokes[-1]
         ls = laststroke()
         if ls == {'GP obj inactive'}:
             return {'CANCELLED'}
@@ -794,7 +801,7 @@ class WPStrokeH(bpy.types.Operator):  # First+ Last Point of last Stroke create 
 
     def execute(self, context):
         # last greasepencil stroke
-        # gp_laststroke = bpy.data.grease_pencil[-1].layers.active.active_frame.strokes[-1]
+        # gp_laststroke = bpy.data.grease_pencils[-1].layers.active.active_frame.strokes[-1]
         ls = laststroke()
         if ls == {'GP obj inactive'}:
             return {'CANCELLED'}
@@ -850,7 +857,7 @@ class WPselect3P(bpy.types.Operator):  # Plane from 1/2/3 Points in Selection
         activate_gp()
         if not bpy.context.mode == 'EDIT_GPENCIL':
             bpy.ops.object.mode_set(mode='EDIT_GPENCIL')
-            bpy.context.scene.tool_settings.gpencil_selectmode = 'POINT'
+            bpy.context.scene.tool_settings.gpencil_selectmode_edit = 'POINT'
         else:
             # prevent this mode from deleting last stroke
             if bpy.context.scene.del_stroke:

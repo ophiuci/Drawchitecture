@@ -1,3 +1,6 @@
+**Ophiuci Fork**
+_minor modifications to get add-on working in Blender 2.82_
+
 **DRAWCHITECTURE**  
 _freehand sketching in **3D** using a Add-on for [**Blender 2.8 beta**](https://www.blender.org/2-8/)_  
 `Author: Philipp Sommer` `Blender Plug-In scripted in Python` `making use of graphic tablet hardware or mouse`
